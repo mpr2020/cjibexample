@@ -1,3 +1,4 @@
+library(data.table)
 library(mongolite)
 library(randomcoloR)
 library(colorspace) # toegevoegd

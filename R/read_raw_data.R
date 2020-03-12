@@ -11,5 +11,5 @@
 # parking <- db$find()
 # Of lees de CSV van ooit
 
-parking_almere_data <- read.csv("almere_parking.csv")
-kaart_parkings_almere <- read_excel("park.xlsx")
+parking_almere_data <- fread("data/almere_parking.csv")
+kaart_parkings_almere <- read_excel("data/park.xlsx")

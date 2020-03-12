@@ -1,0 +1,51 @@
+---
+title: "test_RMarkdown"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+source("load_packages.R")
+source("read_raw_data.R")
+
+# 
+parking_almere_filter_data <- arrange(parking_almere_data, updated) %>%
+  filter(!label %in% c("P+R","P4") ) %>% # wat filtert dit commando? want P+R en P4 blijven wel bestaan in de data
+  mutate(label = as.factor(label),
+         updated = as.POSIXct(updated, tz = "UTC"))
+
+
+# Plot van alles
+parking_periode_20191002_tm_20191007_data <- 
+  filter(park, 
+         as.Date(updated) > as.Date("2019-10-1"),
+         as.Date(updated) < as.Date("2019-10-8")
+        )
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+
+ggplot(parking_periode_20191002_tm_20191007, aes(x = updated, y = parked, col = label)) +
+  geom_line() +
+#  scale_colour_manual(values = colorspace::pal(nlevels(park$label))) +
+  scale_colour_manual(values = colorspace::diverging_hcl(nlevels(park$label), palette = "Blue-Red")) +
+  theme_bw()
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
