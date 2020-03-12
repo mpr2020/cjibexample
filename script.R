@@ -1,42 +1,20 @@
-library(mongolite)
-library(randomcoloR)
-library(colorspace) # toegevoegd
-library(RColorBrewer) #ntoegevoegd
-library(ggplot2)
-library(plotly)
-library(lubridate)
-library(dplyr)
-library(readxl)
-library(leaflet)
-library(randomForest)
-library(randomForestExplainer)
-library(mgcv)
-
-# Inlezen gegevens...
-# db <- mongo(collection = "almereparkingjson",
-#             url = sprintf(
-#               "mongodb://%s:%s@%s/%s",
-#               "remko", 
-#               "playpass123", 
-#               "ds229186.mlab.com:29186",
-#               "almereparking"))
-# 
-# parking <- db$find()
-# Of lees de CSV van ooit
-parking_almere_data <- read.csv("almere_parking.csv")
-kaart_parkings_almere <- read_excel("park.xlsx")
+source("R/load_packages.R")
+source("R/read_raw_data.R")
 
 unique(parking_almere_data$label)
 unique(park$label)
+
+filter(parking_almere_filter_data, !label %in% c("P+R","P4") )
+
 # 
 parking_almere_filter_data <- arrange(parking_almere_data, updated) %>%
-  filter(!label %in% c("P+R","P4") ) %>% # wat doet dit commando?
+  filter(!label %in% c("P+R","P4") ) %>% # wat filtert dit commando? want P+R en P4 blijven wel bestaan in de data
   mutate(label = as.factor(label),
          updated = as.POSIXct(updated, tz = "UTC"))
 
 
 # Plot van alles
-parking_periode_20191002_tm_20191007 <- 
+parking_periode_20191002_tm_20191007_data <- 
   filter(park, 
          as.Date(updated) > as.Date("2019-10-1"),
          as.Date(updated) < as.Date("2019-10-8")
@@ -45,7 +23,7 @@ parking_periode_20191002_tm_20191007 <-
 ggplot(parking_periode_20191002_tm_20191007, aes(x = updated, y = parked, col = label)) +
   geom_line() +
 #  scale_colour_manual(values = colorspace::pal(nlevels(park$label))) +
-  scale_colour_manual(values = colorspace::pal(nlevels(park$label))) +
+  scale_colour_manual(values = colorspace::diverging_hcl(nlevels(park$label), palette = "Blue-Red")) +
   theme_bw()
 
 
@@ -70,7 +48,8 @@ park_sub <- filter(park_gr,
 
 ggplot(park_gr, aes(x = updated, y=parked, col=label)) +
   geom_line() +
-  scale_colour_manual(values = randomColor(nlevels(park$label), "blue")) +
+  #scale_colour_manual(values = randomColor(nlevels(park$label), "blue")) +
+  scale_colour_manual(values = colorspace::diverging_hcl(nlevels(park$label), palette = "Blue-Red")) +
   theme_bw()
 
 
@@ -122,7 +101,6 @@ ggplot(park_gr_ave, aes(x = week_time_15, y = parked)) +
   geom_line() +
   facet_wrap(~label)
 
-
 # Heatmap : wekelijks verloop vs. seizoensverloop
 # Apart per parkeerplaats
 park_gr$week <- week(park_gr$updated)
@@ -135,18 +113,10 @@ filter(park_gr_ave, label == "P11") %>%
     geom_tile() +
     scale_fill_viridis_c()
 
-
-
-
 # Kaart
-
-
-
 leaflet(k) %>%
   addMarkers(~lon, ~lat, label = paste(k$label, k$naam)) %>%
   addTiles()
-
-
 
 # Samenvatting.
 
@@ -205,7 +175,7 @@ predict(model1, newdata = data.frame(hour = hour(Sys.time()),
 
 data <- subset(park_gr, label == "P7")
 
-with(data, plot(week_time, parked, pch="."))
+with(data, plot(week_time, parked, pch = "."))
 
 model2 <- gam(parked ~ s(week_time, k=50), data = data)
 
@@ -216,6 +186,6 @@ wt <- (wday(Sys.time()) - 1) * 24*60 +
   60*(hour(Sys.time())) + minute(Sys.time())
 
 predict(model2, newdata = data.frame(week_time = wt))
-points(wt, 9, pch=19,col="red")
+points(wt, 9, pch = 19,col = "red")
 
 
